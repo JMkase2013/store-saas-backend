@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  stores    Store[]
+}
+
+model Store {
+  id                String    @id @default(uuid())
+  name              String
+  subdomain         String    @unique
+  customDomain      String?   @unique
+  logo              String?
+  description       String?
+  googleSheetId     String?
+  googleSheetRange  String?
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  products          Product[]
+  theme             Theme?
+  settings          Settings?
+}
+
+model Product {
+  id              String   @id @default(uuid())
+  name            String
+  category        String?
+  price           Float
+  discountedPrice Float?
+  stock           Int      @default(0)
+  availability    Boolean  @default(true)
+  tag             String?
+  thumbnail       String?
+  description     String?
+  images          String[]
+  storeId         String
+  store           Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  syncedFromSheet Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([storeId])
+  @@index([category])
+}
+
+model Theme {
+  id              String  @id @default(uuid())
+  primaryColor    String  @default("#000000")
+  secondaryColor  String  @default("#ffffff")
+  fontFamily      String  @default("Inter")
+  layout          String  @default("grid")
+  storeId         String  @unique
+  store           Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+}
+
+model Settings {
+  id                    String  @id @default(uuid())
+  allowOrders           Boolean @default(true)
+  showStock             Boolean @default(true)
+  enableWhatsApp        Boolean @default(false)
+  whatsAppNumber        String?
+  currency              String  @default("USD")
+  shippingEnabled       Boolean @default(false)
+  storeId               String  @unique
+  store                 Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+}
